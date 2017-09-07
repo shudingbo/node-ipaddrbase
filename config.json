@@ -1,0 +1,10 @@
+{
+    "dataSrc": "qqwry.dat",
+    "savePath": "qqwry.txt",
+    "progressFile":"progress.txt",
+    "off"     : [ 0, 0.0001 ],
+    "freq"    :2000,
+    "progressDis" : 1,
+    "template":""
+}
+
