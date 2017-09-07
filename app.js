@@ -4,7 +4,9 @@ const http = require('http');
 const querystring=require('querystring');  
 const iconv = require('iconv-lite');
 const fs = require('fs');
+const pathC = require('path');
 const ipC = require('ip');
+const co = require('co');
 
 const cfg = require("./config.json");
 
@@ -18,7 +20,8 @@ function showHelp(){
    console.log(" h  show help");
    console.log(" q  <IP addr>, query ip addr's location");
    console.log(" h  show help");
-   console.log(" g  run command");
+   console.log(" g  get addr");
+   console.log(" c  generator db data");
    console.log("------------------------------------");
 }
 
@@ -294,6 +297,7 @@ function load_progress()
   }
 }
 
+/** Get IP addr from taobao */
 function get_locs()
 {
   if( g_rec.length > 0 ){
@@ -332,6 +336,149 @@ function get_locs()
 }
 
 
+function makeRecByTemplate( rec){
+  return '';
+}
+
+
+function get_file( recs, fileName, cb ){
+  let readRl = readline.createInterface({
+    input: fs.createReadStream( fileName),
+    historySize:0
+  }); 
+  readRl.on('line', (line)=>{  
+      //var tmp = 'line' + index.toString() + ':' + line;  
+      let detail = line.split(' ');
+      if( detail.length === 14 ){
+        detail[2] = parseInt( detail[2] );
+        detail[3] = parseInt( detail[3] );
+        recs.push( detail );
+      }
+  });
+
+  readRl.on('close', ()=>{  
+      cb( fileName );
+  });
+}
+
+
+function loadBin( ){
+
+  return new Promise( (resolve, reject )=>{
+    let bins = [];
+    let dir = pathC.dirname( cfg.savePath);
+    let files = fs.readdirSync( dir );
+    for(let i=0;i<files.length;i++){
+        let fileName = pathC.basename( files[i] );
+        let ext = pathC.extname( files[i] );
+        if( ext === '.bin' ){
+          bins.push( pathC.join(dir , files[i]) );
+        }
+    }
+
+    let recs = [];
+    let readOK = 0;
+    // 读取所有文件的记录
+    for( let i=0;i<bins.length; i++ )
+    { 
+        get_file( recs,bins[i], function(){
+            readOK++;
+            if( readOK === bins.length ){
+              resolve( recs);
+            }
+        });
+    }
+  });
+
+}
+
+/** 排序 */
+function sort_bin( rec0,rec1 )
+{
+    return rec0[2] - rec1[2];
+}
+
+function makeData()
+{
+
+  co(function* () {
+    console.log("数据读取中...");
+    let recs = yield loadBin();
+    
+    /// 排序
+    console.log( "排序,合并..." );
+    recs.sort( sort_bin );
+    
+    let recsNew = [];
+    /// 合并
+    let linePre = recs[0];
+    let lineNow = [];
+    for( let i=1; i<recs.length;i++ )
+    {
+        lineNow = recs[i];
+        let bMerge = true;
+        if( lineNow[2] - linePre[3] === 1 ){
+            for( let j=4;j<14;j++ ){
+              if( lineNow[j] !== linePre[j] ){
+                 bMerge = false;
+              }
+            }
+        }else{
+          bMerge = false;
+        }
+
+        if( bMerge ){
+            linePre[3] = lineNow[3];
+        }else{
+            recsNew.push( linePre );
+            linePre = lineNow;
+        }
+    }
+
+    recsNew.push( linePre );
+
+    console.log( `原记录数:${recs.length}  合并后记录数：${recsNew.length}` );
+
+    console.log( "写数据文件" );
+    let fd = fs.openSync( 'db.dat' , 'w' );
+    for( let i=0;i<recsNew.length; i++ )
+      {
+        let t = recsNew[i];
+        let loc = {
+          sip : t[0],
+          eip : t[1],
+          sVal: t[2],
+          eVal:t[3],
+          country:t[4],
+          country_id:t[5],
+          region:t[6],
+          region_id:t[7],
+          city:t[8],
+          city_id:t[9],
+          county:t[10],
+          county_id:t[11],
+          isp:t[12],
+          isp_id:t[13]
+        };
+
+        let msg = eval( cfg.template ) + "\n";
+        fs.writeSync( fd, msg);
+      }
+
+    fs.closeSync( fd);
+  
+    return recs.length;
+  }).then(function (value) {
+    rl.resume();
+  }, function (err) {
+    rl.resume();
+    console.error(err.stack);
+  });
+    
+
+    
+}
+
 function main()
 {
     showHelp();
@@ -364,7 +511,7 @@ function main()
                 rl.resume();
             });
           }break;
-          case 'g':
+          case 'g':  // 从 淘宝获取 纯真的地址信息，存储在 savePath 里
           {
             rl.pause();
             console.log( "start Handle ...!", cfg );
@@ -373,6 +520,11 @@ function main()
                     get_locs();
                 },1000);
             });
+          }break;
+          case 'c':  // 合并，清除重复数据，并根据模板生成相关文本
+          {
+              rl.pause();
+              makeData();
           }break;
           default:{
             console.log('not find cmd');
@@ -383,7 +535,6 @@ function main()
       if( g_bPauseRL === false ){
         rl.prompt();
       }
-      
     });
     
     rl.on('close',function(){
@@ -402,16 +553,18 @@ function main()
 
 function main1()
 {
-  console.log( "start Handle ...!", cfg );
-  parseIpData( cfg.dataSrc,function(){
-      setTimeout( function(){
-          get_locs();
-      },1000);
-  });
+  // console.log( "start Handle ...!", cfg );
+  // parseIpData( cfg.dataSrc,function(){
+  //     setTimeout( function(){
+  //         get_locs();
+  //     },1000);
+  // });
+  ////////////
+  ///makeData();
 }
 
 
-main1();
+main();
 
 
 

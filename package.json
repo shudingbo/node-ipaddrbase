@@ -1,16 +1,16 @@
 {
-    "name": "ipq",
-    "version": "0.0.1",
-    "description": "纯真数据库转换",
-    "dependencies": {
-        "iconv-lite": "^0.4.13",
-        "ip": "^1.1.0"
-      },
-    "main": "app.js",
-    "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
-    },
-    "author": "shudingbo",
-    "license": "MIT"
+  "name": "ipq",
+  "version": "0.0.1",
+  "description": "纯真数据库转换",
+  "dependencies": {
+    "co": "^4.6.0",
+    "iconv-lite": "^0.4.13",
+    "ip": "^1.1.0"
+  },
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "shudingbo",
+  "license": "MIT"
 }
-
