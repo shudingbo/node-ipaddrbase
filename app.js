@@ -65,13 +65,8 @@ function get_ip_location( ip ,cb )
     }, 1000);
 
     var chunks = [];
-    //console.log(`STATUS: ${res.statusCode}`);
-    //console.log(`HEADERS: ${JSON.stringify(res.headers)}`);
-    //res.setEncoding('utf8');
     res.on('data', (chunk) => {
       chunks.push(chunk);
-      //console.log(chunk);
-      
     });
     res.on('end', () => {
       clearTimeout(response_timer);
@@ -84,17 +79,9 @@ function get_ip_location( ip ,cb )
   
   req.on('error', (e) => {
     clearTimeout(request_timer);
-    //console.log(`problem with request: ${e.message}`);
     cb( e.message, "" );
   });
 
-  // req.setTimeout(200, function(){
-  //   console.log("time out:", ip  );
-  //   req.abort();
-  //   cb( "timeout", "" );
-  // });
-  
-  // write data to request body
   req.end();
 }
 
