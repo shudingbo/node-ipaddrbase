@@ -403,16 +403,32 @@ function makeData()
 
   co(function* () {
     console.log("数据读取中...");
-    let recs = yield loadBin();
+    let recsTT = yield loadBin();
     
     /// 排序
     console.log( "排序,合并..." );
-    recs.sort( sort_bin );
+    recsTT.sort( sort_bin );
     
+    /// 去重
+    let recs = [];
+    let linePre = recsTT[0];
+    let lineNow = [];
+    for( let i=1; i<recsTT.length;i++ )
+    {
+        lineNow = recsTT[i];
+        if( lineNow[2] !== linePre[2] ){
+            recs.push( linePre );
+            linePre = lineNow;
+        }
+    }
+
+    recs.push(linePre);
+    recsTT = undefined;
+
     let recsNew = [];
     /// 合并
-    let linePre = recs[0];
-    let lineNow = [];
+    linePre = recs[0];
+    lineNow = [];
     for( let i=1; i<recs.length;i++ )
     {
         lineNow = recs[i];
@@ -438,7 +454,7 @@ function makeData()
     recsNew.push( linePre );
 
     console.log( `原记录数:${recs.length}  合并后记录数：${recsNew.length}` );
-
+    recs = undefined;
     console.log( "写数据文件" );
     let fd = fs.openSync( 'db.dat' , 'w' );
     for( let i=0;i<recsNew.length; i++ )
@@ -467,7 +483,7 @@ function makeData()
 
     fs.closeSync( fd);
   
-    return recs.length;
+    return recsNew.length;
   }).then(function (value) {
     rl.resume();
   }, function (err) {
@@ -560,11 +576,11 @@ function main1()
   //     },1000);
   // });
   ////////////
-  ///makeData();
+  makeData();
 }
 
 
-main();
+main1();
 
 
 
