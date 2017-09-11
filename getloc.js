@@ -116,7 +116,7 @@ function get_ip_location( ip ,cb )
 function writeRecByTemplate( rec,cfg ){
     let fileName = pathC.basename( cfg.savePath,'.bin' );
     fileName += "_" + cfg.off[0] + ".bin";
-    let fd = fs.openSync( fileName + cfg.off[0] , 'a' );
+    let fd = fs.openSync( fileName , 'a+' );
     let loc = rec;
     let msg = eval( cfg.template ) + "\n";
     fs.writeSync( fd, msg);
