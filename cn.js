@@ -315,7 +315,7 @@ function writeTmpData( fileName,val){
 function writeRecByTemplate( rec,cfg ){
     let fd = fs.openSync( cfg.savePath , 'a' );
     let loc = rec;
-    let msg = eval( cfg.template ) + "\n";
+    let msg = `${loc.sip} ${loc.eip} ${loc.sVal} ${loc.eVal} ${loc.country} ${loc.country_id} ${loc.region} ${loc.region_id} ${loc.city} ${loc.city_id} ${loc.county} ${loc.county_id} ${loc.isp} ${loc.isp_id}\n`;
     fs.writeSync( fd, msg);
     fs.closeSync( fd);
 }
@@ -364,6 +364,9 @@ cn.makeCNData = function (czs, cns,noChina, cfg){
     let notHandle = [];
     for( let i=0;i<lenCZs;i++ )
     {
+        if( i%10000 === 0 ){
+            console.log("生成中...", lenCZs-i );
+        }
         let info = czs[i][2];
         let oper = czs[i][3];
         let val = matchCity( info );

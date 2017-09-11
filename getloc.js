@@ -141,7 +141,16 @@ function writeRecord( rec, loc,cfg  )
     loc.sVal = ipC.toLong( rec[0] );
     loc.eVal = ipC.toLong( rec[1] );
 
-    writeRecByTemplate( loc, cfg );
+    let fileName = pathC.basename( cfg.savePath,'.bin' );
+    fileName += "_" + cfg.off[0] + ".bin";
+
+    let fd = fs.openSync( fileName , 'a+' );
+    let sIP = ipC.toLong( rec[0] );
+    let eIP = ipC.toLong( rec[1] );
+    let msg = `${rec[0]} ${rec[1]} ${sIP} ${eIP} ${loc.country} ${loc.country_id} ${loc.region} ${loc.region_id} ${loc.city} ${loc.city_id} ${loc.county} ${loc.county_id} ${loc.isp} ${loc.isp_id}\n`;
+    fs.writeSync( fd, msg);
+    fs.closeSync( fd);
+
     write_progress( loc.sVal,cfg );
 }
 /** Get IP addr from taobao */
