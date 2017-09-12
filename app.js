@@ -2,9 +2,9 @@
 const fs = require('fs');
 const co = require('co');
 const cfg = require("./config.json");
-const CN  = require("./cn.js");
-const CZ  = require("./parseCZData.js");
-const getLoc  = require("./getloc.js");
+const CN  = require("./js/cn.js");
+const CZ  = require("./js/parseCZData.js");
+const getLoc  = require("./js/getloc.js");
 
 
 function main()

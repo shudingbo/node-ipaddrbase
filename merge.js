@@ -98,6 +98,14 @@ function makeData()
     console.log("开始合并....");
     linePre = recs[0];
     lineNow = [];
+
+    let mergeMode = 12;
+    if( cfg.merge.mode == "areaANDisp" ){
+        mergeMode = 14;
+    }else if( cfg.merge.mode == "city" ){
+        mergeMode = 10;
+    }
+
     for( let i=1; i<recs.length;i++ )
     {
         if( i %100000 === 0 ){
@@ -107,7 +115,7 @@ function makeData()
         lineNow = recs[i];
         let bMerge = true;
         if( lineNow[2] - linePre[3] === 1 ){
-            for( let j=4;j<14;j++ ){
+            for( let j=4;j<mergeMode;j++ ){
               if( lineNow[j] !== linePre[j] ){
                  bMerge = false;
               }
@@ -129,7 +137,7 @@ function makeData()
     console.log( `原记录数:${recs.length}  合并后记录数：${recsNew.length}` );
     recs = undefined;
     console.log( "写数据文件" );
-    let fd = fs.openSync( cfg.merge , 'w' );
+    let fd = fs.openSync( cfg.merge.out , 'w' );
     for( let i=0;i<recsNew.length; i++ )
       {
         let t = recsNew[i];

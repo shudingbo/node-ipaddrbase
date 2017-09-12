@@ -280,6 +280,16 @@ function makeCNS( rec, info,cns,cfg )
     }
 
     if( cn !== null ){
+        //console.log( rec);
+        let isp = "-1";
+        let isp_id = "-1";
+        let ispInfo = cfg.isp[ rec[3] ];
+        if( ispInfo !== undefined){
+            isp = rec[3];
+            isp_id = ispInfo;
+        }
+
+
         let loc = {
             sip : ipC.fromLong(rec[0]),
             eip : ipC.fromLong(rec[1]),
@@ -293,8 +303,8 @@ function makeCNS( rec, info,cns,cfg )
             city_id:cns[cn][4],
             county:cns[cn][2],
             county_id:cns[cn][5],
-            isp:"-1",
-            isp_id:"-1"
+            isp:isp,
+            isp_id:isp_id
         };
         writeRecByTemplate( loc, cfg);
         //writeTmpData( "ch.dat", [rec, info, cns[cn]]  );
