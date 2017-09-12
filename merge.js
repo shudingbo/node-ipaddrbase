@@ -158,7 +158,7 @@ function makeData()
           isp_id:t[13]
         };
 
-        let msg = eval( cfg.template ) + "\n";
+        let msg = eval( cfg.merge.template ) + "\n";
         fs.writeSync( fd, msg);
       }
 

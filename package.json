@@ -1,6 +1,6 @@
 {
   "name": "ipq",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "纯真数据库转换",
   "dependencies": {
     "co": "^4.6.0",
@@ -10,6 +10,10 @@
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shudingbo/node-ipaddrbase.git"
   },
   "author": "shudingbo",
   "license": "MIT"

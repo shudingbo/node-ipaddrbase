@@ -7,13 +7,13 @@
     "merge":{
         "out":"out/out.db",
         "mode":"county",
-        "desc":"city|county|areaANDisp"
+        "desc":"city|county|areaANDisp",
+        "template":"`insert into TIPdb (sip,eip,sVal,eVal,country,country_id,region,region_id,city,city_id,county,county_id,isp,isp_id) VALUES('${loc.sip}','${loc.eip}','${loc.sVal}','${loc.eVal}','${loc.country}','${loc.country_id}','${loc.region}','${loc.region_id}','${loc.city}','${loc.city_id}','${loc.county}','${loc.county_id}','${loc.isp}','${loc.isp_id}')`"
     },
     "noChina":"data/GeoLite2-City-Locations-zh-CN.csv",
     "off"     : [ 0, 0.1 ],
     "freq"    :2000,
     "progressDis" : 1,
-    "template":"`insert into TIPdb (sip,eip,sVal,eVal,country,country_id,region,region_id,city,city_id,county,county_id,isp,isp_id) VALUES('${loc.sip}','${loc.eip}','${loc.sVal}','${loc.eVal}','${loc.country}','${loc.country_id}','${loc.region}','${loc.region_id}','${loc.city}','${loc.city_id}','${loc.county}','${loc.county_id}','${loc.isp}','${loc.isp_id}')`",
     "isp":{
         "电信":100017,
         "铁通":100020,
