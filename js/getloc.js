@@ -41,6 +41,7 @@ getLoc.getRecsLocation = function( cfg )
         if( progress.length === 0 ){
             let fileName = pathC.basename( cfg.savePath,'.bin' );
             fileName += "_" + cfg.off[0] + ".bin";
+            fileName = pathC.join( pathC.dirname( cfg.savePath ), fileName  );
             let fd = fs.openSync( fileName, 'w' );
             fs.close( fd );
         }
@@ -113,15 +114,6 @@ function get_ip_location( ip ,cb )
     req.end();
 }
 
-function writeRecByTemplate( rec,cfg ){
-    let fileName = pathC.basename( cfg.savePath,'.bin' );
-    fileName += "_" + cfg.off[0] + ".bin";
-    let fd = fs.openSync( fileName , 'a+' );
-    let loc = rec;
-    let msg = eval( cfg.template ) + "\n";
-    fs.writeSync( fd, msg);
-    fs.closeSync( fd);
-}
 
 function writeRecord( rec, loc,cfg  )
 {
@@ -143,6 +135,7 @@ function writeRecord( rec, loc,cfg  )
 
     let fileName = pathC.basename( cfg.savePath,'.bin' );
     fileName += "_" + cfg.off[0] + ".bin";
+    fileName = pathC.join( pathC.dirname( cfg.savePath ), fileName  );
 
     let fd = fs.openSync( fileName , 'a+' );
     let sIP = ipC.toLong( rec[0] );
