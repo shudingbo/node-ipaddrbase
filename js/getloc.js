@@ -99,7 +99,7 @@ function get_ip_location( ip ,cb )
         });
         res.on('end', () => {
             clearTimeout(response_timer);
-            var decodedBody = eval("'" + iconv.decode(Buffer.concat(chunks), 'utf-8') +"'");
+            var decodedBody = iconv.decode(Buffer.concat(chunks), 'utf-8');
             if( cb !== undefined ){
                 cb( null,decodedBody );
             }
