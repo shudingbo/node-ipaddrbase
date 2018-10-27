@@ -163,10 +163,14 @@ function get_locs( cfg )
                 }
 
                 //console.log( rec, loc );
-                let obj = JSON.parse(loc);
-                if( obj.code === 0 ){
-                    writeRecord( rec, obj.data,cfg );
-                }else{
+                try{
+                    let obj = JSON.parse(loc);
+                    if( obj.code === 0 ){
+                        writeRecord( rec, obj.data,cfg );
+                    }else{
+                        g_rec.push( rec );
+                    }
+                }catch(err){
                     g_rec.push( rec );
                 }
             }
