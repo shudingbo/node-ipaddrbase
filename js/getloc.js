@@ -10,6 +10,9 @@ const querystring=require('querystring');
 const iconv = require('iconv-lite');
 const pathC = require('path');
 
+let g_getErrCnt = 0;   // 累计出现错误次数
+let g_getOkCnt = 0;    // 累计出现正确次数
+
 const getLoc = exports;
 
 let g_rec = [];
@@ -43,7 +46,7 @@ getLoc.getRecsLocation = function( cfg )
             fileName += "_" + cfg.off[0] + ".bin";
             fileName = pathC.join( pathC.dirname( cfg.savePath ), fileName  );
             let fd = fs.openSync( fileName, 'w' );
-            fs.close( fd );
+            fs.closeSync( fd );
         }
 
         let i=0,j=0;
@@ -146,15 +149,21 @@ function writeRecord( rec, loc,cfg  )
 
     write_progress( loc.sVal,cfg );
 }
+
+
+
+
 /** Get IP addr from taobao */
 function get_locs( cfg )
 {
     if( g_rec.length > 0 ){
         let rec = g_rec.shift();
         get_ip_location( rec[0] , function( err,loc ){
-            let bTimeOut = cfg.freq;
+            
             if(err !== null){
-                bTimeOut = bTimeOut*2;
+				g_getErrCnt++;
+				g_getOkCnt = 0;
+				
                 console.log( err,rec );
                 g_rec.push( rec );
             }else{
@@ -163,15 +172,38 @@ function get_locs( cfg )
                 }
 
                 //console.log( rec, loc );
-                let obj = JSON.parse(loc);
-                if( obj.code === 0 ){
-                    writeRecord( rec, obj.data,cfg );
-                }else{
-                    g_rec.push( rec );
-                }
+				try{
+					let obj = JSON.parse(loc);
+					if( obj.code === 0 ){
+						writeRecord( rec, obj.data,cfg );
+					}else{
+						g_rec.push( rec );
+					}
+					
+					g_getOkCnt++;
+				}catch(e)
+				{
+					g_rec.push( rec );
+					console.log('xx'+e.message);
+					g_getErrCnt++;
+					g_getOkCnt = 0;
+				}
+                
             }
 
             if( g_rec.length > 0 ){
+				let bTimeOut = cfg.freq;
+				if( g_getErrCnt > 3 ){
+					bTimeOut *= 4;
+				}
+				
+				if( g_getErrCnt >= 3 && g_getOkCnt > 3 ) {
+					g_getErrCnt = 0;
+				}else{
+					bTimeOut *= 4;
+				}
+				
+				
                 setTimeout( function(){
                     get_locs( cfg);
                 }, bTimeOut);
