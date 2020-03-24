@@ -1,7 +1,6 @@
 # node-ipaddrbase
-IP addr base( 纯真 IP地址库 重置版 )，本库是一个IP地址库生成工具，根据 [纯真IP地址库的IP段](http://www.cz88.net/) 和 [淘宝IP地址库的地址信息](http://ip.taobao.com/index.php)，重置生成新的IP地址库。
+IP addr base( 纯真 IP地址库 重置版 )，本库是一个IP地址库生成工具，根据 [纯真IP地址库的IP段](http://www.cz88.net/) ，重置生成新的IP地址库。
 
-**淘宝IP地址库，拥有 更加规范的信息返回，更方便程序进行进一步的地理信息挖掘处理。**
 
 功能：
 1. 支持分段多台机子一起从淘宝 IP地址库 查询 IP分段的地址信息； 

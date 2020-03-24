@@ -10,10 +10,15 @@ const querystring=require('querystring');
 const iconv = require('iconv-lite');
 const pathC = require('path');
 
-let g_getErrCnt = 0;   // 累计出现错误次数
-let g_getOkCnt = 0;    // 累计出现正确次数
-
 const getLoc = exports;
+
+const _timerGet = null;
+
+function timeout(ms) {
+    return new Promise((resolve) => {
+      setTimeout(resolve, ms);
+    });
+}
 
 let g_rec = [];
 getLoc.getRecsLocation = function( cfg )
@@ -64,57 +69,81 @@ getLoc.getRecsLocation = function( cfg )
         console.log("--- 解析完成，开始获取记录信息, 数量：", g_rec.length);
 
     }).then(function (value) {
-        setTimeout( function(){
-             get_locs( cfg );
-        },1000);
+        (async ()=>{
+            while( g_rec.length > 0 ){
+                let rec = g_rec.shift();
+                await get_locs( rec,cfg );
+                await timeout( cfg.freq );
+            };
+
+            console.log( "get all OK!" );
+        })();
     }, function (err) {
         console.error(err.stack);
     });
 };
 
-function get_ip_location( ip ,cb )
-{
-    /////////
-    const options = {
-        host:'ip.taobao.com',
-        path:'/service/getIpInfo.php?ip='+ip,
-        method: 'GET'
-    };
 
-    var request_timer = null,req = null;
 
-    request_timer = setTimeout(function() {
-        req.abort();
-        //console.log('Request Timeout.');
-    }, 5000);
-
-    req = http.request(options, (res) => {
-        clearTimeout(request_timer);
-
-        var response_timer = setTimeout(function() {
-            res.destroy();
-            console.log('Response Timeout.');
-        }, 1000);
-
-        var chunks = [];
-        res.on('data', (chunk) => {
-            chunks.push(chunk);
+function httpGet(host,path,encoding='utf-8'){
+    return new Promise((resolve, reject)=>{
+        const options = {
+            host,
+            path,
+            method: 'GET'
+        };
+    
+        var request_timer = null,req = null;
+    
+        request_timer = setTimeout(function() {
+            req.abort();
+            //console.log('Request Timeout.');
+        }, 5000);
+    
+        req = http.request(options, (res) => {
+            clearTimeout(request_timer);
+    
+            let response_timer = setTimeout(function() {
+                res.destroy();
+                console.log('Response Timeout.');
+            }, 1000);
+    
+            let chunks = [];
+            res.on('data', (chunk) => {
+                chunks.push(chunk);
+            });
+            res.on('end', () => {
+                clearTimeout(response_timer);
+                let decodedBody = iconv.decode(Buffer.concat(chunks), encoding);
+                resolve(decodedBody)
+            });
         });
-        res.on('end', () => {
-            clearTimeout(response_timer);
-            var decodedBody = iconv.decode(Buffer.concat(chunks), 'utf-8');
-            if( cb !== undefined ){
-                cb( null,decodedBody );
-            }
+    
+        req.on('error', (e) => {
+            clearTimeout(request_timer);
+            reject( e.message );
         });
+    
+        req.end();
     });
+    
+};
 
-    req.on('error', (e) => {
-        clearTimeout(request_timer);
-        cb( e.message, "" );
-    });
 
-    req.end();
+async function get_loc_pconline(ip){
+    let host = 'whois.pconline.com.cn';
+    let path = `/ipJson.jsp?ip=${ip}&json=true`;
+
+    let ret = await httpGet( host ,path ,'gb2312');
+    return ret;
+}
+
+async function get_loc_ipapi(ip){
+    let host = 'ip-api.com';
+    let path = `/json/${ip}?lang=zh-CN`;
+
+    let ret = await httpGet( host ,path ,'utf-8');
+    return ret;
 }
 
 
@@ -152,68 +181,71 @@ function writeRecord( rec, loc,cfg  )
 
 
 
+async function get_locs( rec,cfg ){
 
-/** Get IP addr from taobao */
-function get_locs( cfg )
-{
-    if( g_rec.length > 0 ){
-        let rec = g_rec.shift();
-        get_ip_location( rec[0] , function( err,loc ){
-            
-            if(err !== null){
-				g_getErrCnt++;
-				g_getOkCnt = 0;
-				
-                console.log( err,rec );
-                g_rec.push( rec );
-            }else{
-                if( g_rec.length % cfg.progressDis === 0 ){
-                    console.log( g_rec.length );
-                }
-
-                //console.log( rec, loc );
-				try{
-					let obj = JSON.parse(loc);
-					if( obj.code === 0 ){
-						writeRecord( rec, obj.data,cfg );
-					}else{
-						g_rec.push( rec );
-					}
-					
-					g_getOkCnt++;
-				}catch(e)
-				{
-					g_rec.push( rec );
-					console.log('xx'+e.message);
-					g_getErrCnt++;
-					g_getOkCnt = 0;
-				}
-                
-            }
-
-            if( g_rec.length > 0 ){
-				let bTimeOut = cfg.freq;
-				if( g_getErrCnt > 3 ){
-					bTimeOut *= 4;
-				}
-				
-				if( g_getErrCnt >= 3 && g_getOkCnt > 3 ) {
-					g_getErrCnt = 0;
-				}else{
-					bTimeOut *= 4;
-				}
-				
-				
-                setTimeout( function(){
-                    get_locs( cfg);
-                }, bTimeOut);
-            }else{
-                console.log( "get all OK!" );
-            }
-        });
-    }else{
-        console.log( "get all OK!" );
+    try{
+        if( g_rec.length % cfg.progressDis === 0 ){
+            console.log( g_rec.length );
+        }
+        
+        let info = await get_ipInfo(rec);
+        writeRecord( rec, info,cfg );
+    }catch(e){
+        console.log( e,rec );
+        g_rec.push( rec );
+        await timeout( cfg.freq );
     }
+}
+
+/**
+ * 
+ * @param {string} isp 
+ */
+function getIspInfo(isp){
+    const ispInfo = {
+        '0': {isp:'移动', isp_id:'100025'},
+        '1': {isp:'电信', isp_id:'100017'},
+        '2': {isp:'联通', isp_id:'100026'},
+        '3': {isp:'中移铁通', isp_id:'100020'},
+    }
+
+
+    if( isp.indexOf('China Mobile communications') !== -1){
+        return ispInfo['0'];
+    }else if( isp.indexOf('Chinanet') !== -1){
+        return ispInfo['1'];
+    }else if( isp.indexOf('China169') !== -1){
+        return ispInfo['2'];
+    }else if( isp.indexOf('TieTong') !== -1){
+        return ispInfo['3'];
+    }
+
+    return {isp:'-1', isp_id:'-1'};
+}
+
+
+async function get_ipInfo( rec ){
+    let po = await get_loc_pconline( rec[0] );
+    let ipapi = await get_loc_ipapi( rec[0] );
+
+    let po1 = JSON.parse( po );
+    let ipapi1 = JSON.parse( ipapi );
+
+    let ret = {};
+    ret.country = ipapi1.countryCode;
+    ret.country_id = ipapi1.country;
+    ret.region = po1.pro;
+    ret.region_id = po1.proCode;
+    ret.city = po1.city;
+    ret.city_id = po1.cityCode;
+    ret.county = po1.region;
+    ret.county_id = po1.regionCode;
+    
+    let isp = getIspInfo( ipapi1.isp );
+    ret.isp = isp.isp;
+    ret.isp_id = isp.isp_id;
+
+    return ret;
 }
 
 
