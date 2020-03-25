@@ -189,6 +189,7 @@ async function get_locs( rec,cfg ){
         }
         
         let info = await get_ipInfo(rec);
+
         writeRecord( rec, info,cfg );
     }catch(e){
         console.log( e,rec );
@@ -230,20 +231,36 @@ async function get_ipInfo( rec ){
 
     let po1 = JSON.parse( po );
     let ipapi1 = JSON.parse( ipapi );
-
+	
     let ret = {};
-    ret.country = ipapi1.countryCode;
-    ret.country_id = ipapi1.country;
-    ret.region = po1.pro;
-    ret.region_id = po1.proCode;
-    ret.city = po1.city;
-    ret.city_id = po1.cityCode;
-    ret.county = po1.region;
-    ret.county_id = po1.regionCode;
-    
-    let isp = getIspInfo( ipapi1.isp );
-    ret.isp = isp.isp;
-    ret.isp_id = isp.isp_id;
+	
+	if( po1.proCode === '999999' || ipapi1.status === 'fail' ){
+		ret.country = 'NULL';
+		ret.country_id = 'NULL';
+		ret.region = po1.addr;
+		ret.region_id = po1.proCode;
+		ret.city = po1.city;
+		ret.city_id = po1.cityCode;
+		ret.county = po1.region;
+		ret.county_id = po1.regionCode;
+		
+		ret.isp = '';
+		ret.isp_id = '';
+	} else {
+		ret.country = ipapi1.countryCode;
+		ret.country_id = ipapi1.country;
+		ret.region = po1.pro;
+		ret.region_id = po1.proCode;
+		ret.city = po1.city;
+		ret.city_id = po1.cityCode;
+		ret.county = po1.region;
+		ret.county_id = po1.regionCode;
+		
+		let isp = getIspInfo( ipapi1.isp );
+		ret.isp = isp.isp;
+		ret.isp_id = isp.isp_id;
+	}
+	
 
     return ret;
 }
