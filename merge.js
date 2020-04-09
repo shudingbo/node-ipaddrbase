@@ -137,8 +137,10 @@ function makeData()
     console.log( `原记录数:${recs.length}  合并后记录数：${recsNew.length}` );
     recs = undefined;
     console.log( "写数据文件" );
-    let fd = fs.openSync( cfg.merge.out , 'w' );
-    for( let i=0;i<recsNew.length; i++ )
+
+    if(cfg.merge === undefined || cfg.merge.splitFile === 0 ) {
+      let fd = fs.openSync( cfg.merge.out , 'w' );
+      for( let i=0;i<recsNew.length; i++ )
       {
         let t = recsNew[i];
         let loc = {
@@ -162,7 +164,58 @@ function makeData()
         fs.writeSync( fd, msg);
       }
 
-    fs.closeSync( fd);
+      fs.closeSync( fd);
+    } else {
+      let fileIdx = 0;
+      let nNum = 1;
+      let fd = fs.openSync( `${cfg.merge.out}${fileIdx}` , 'w' );
+      for( let i=0;i<recsNew.length; i++ )
+      {
+        if( nNum === 1 ){
+          fs.writeSync( fd, "BEGIN TRANSACTION\n\n");
+        }
+
+
+        let t = recsNew[i];
+        let loc = {
+          sip : t[0],
+          eip : t[1],
+          sVal: t[2],
+          eVal:t[3],
+          country:t[4],
+          country_id:t[5],
+          region:t[6],
+          region_id:t[7],
+          city:t[8],
+          city_id:t[9],
+          county:t[10],
+          county_id:t[11],
+          isp:t[12],
+          isp_id:t[13]
+        };
+
+        let msg = eval( cfg.merge.template ) + "\n";
+        fs.writeSync( fd, msg);
+
+        nNum++;
+        if( nNum > cfg.merge.splitFile ){
+          fs.writeSync( fd, "\nCOMMIT TRANSACTION\n\n");
+
+          fs.closeSync( fd);
+          fd = null;
+
+          if( i !== recsNew.length -1 ){
+            fileIdx++;
+            nNum=1;
+            fd = fs.openSync( `${cfg.merge.out}${fileIdx}` , 'w' );
+          }
+        }
+      }
+      if( fd !== null ){
+        fs.writeSync( fd, "\nCOMMIT TRANSACTION\n\n");
+        fs.closeSync( fd);
+      }
+    }
   
     return recsNew.length;
   }).then(function (value) {
