@@ -214,7 +214,7 @@ function matchCity( Country, cns )
         }
 
         let regCityCity = /^(.*?)市(.*?)市/;   // 中国
-        r = '吉林市长春市'.match(regCityCity); 
+        //r = '吉林市长春市'.match(regCityCity); 
         //r = '长江大学东校区'.match(regColl);
         r = Country.match(regCityCity); 
         if( r !== null ){
@@ -307,27 +307,49 @@ function makeCNS( rec, info,cns,cfg )
             isp_id:isp_id
         };
         writeRecByTemplate( loc, cfg);
-        //writeTmpData( "ch.dat", [rec, info, cns[cn]]  );
     }else{
         //console.log("not find:", info);
-        //writeTmpData( "no.dat", [rec,ipC.fromLong(rec[0]),ipC.fromLong(rec[1]),info]  );
         return false;
     }
     
 }
 
+
+let g_tmpData = [];
 function writeTmpData( fileName,val){
-    let fd = fs.openSync( fileName, 'a+' );
-    fs.writeSync( fd, val.toString() + "\n");
-    fs.closeSync( fd);
+    if( val !== null ){
+        g_tmpData.push( val.toString() )
+    }
+
+    if( g_tmpData.length > 5000 || val === null ){
+        let fd = fs.openSync( fileName, 'a+' );
+        
+        for( let it of g_tmpData ){
+            fs.writeSync( fd, it + "\n");
+        }
+        fs.closeSync( fd);
+        g_tmpData = [];
+    }
 }
 
+let g_wRecTmp = [];
 function writeRecByTemplate( rec,cfg ){
-    let fd = fs.openSync( cfg.savePath , 'a' );
-    let loc = rec;
-    let msg = `${loc.sip} ${loc.eip} ${loc.sVal} ${loc.eVal} ${loc.country} ${loc.country_id} ${loc.region} ${loc.region_id} ${loc.city} ${loc.city_id} ${loc.county} ${loc.county_id} ${loc.isp} ${loc.isp_id}\n`;
-    fs.writeSync( fd, msg);
-    fs.closeSync( fd);
+    if( rec !== null ){
+        let loc = rec;
+        let msg = `${loc.sip} ${loc.eip} ${loc.sVal} ${loc.eVal} ${loc.country} ${loc.country_id} ${loc.region} ${loc.region_id} ${loc.city} ${loc.city_id} ${loc.county} ${loc.county_id} ${loc.isp} ${loc.isp_id}\n`;
+        g_wRecTmp.push( msg );
+
+    }
+
+    if( g_wRecTmp.length > 5000 || rec===null ){
+        let fd = fs.openSync( cfg.savePath , 'a' );
+        for( let it of g_wRecTmp ){
+            fs.writeSync( fd, it);
+        }
+        
+        fs.closeSync( fd);
+        g_wRecTmp = [];
+    }    
 }
 
 function makeNoChina(rec, cns,cfg)
@@ -403,6 +425,8 @@ cn.makeCNData = function (czs, cns,noChina, cfg){
             }
         }
     }
+    writeTmpData(cfg.noHandleRec, null);
+    writeRecByTemplate( null, cfg);
 
     console.log("not Handler cnt:", notHandle.length, handleOK,  notHandle.length+ handleOK   );
     console.log(" ---- over");

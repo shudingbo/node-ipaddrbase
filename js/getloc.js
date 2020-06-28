@@ -9,6 +9,7 @@ const http = require('http');
 const querystring=require('querystring');
 const iconv = require('iconv-lite');
 const pathC = require('path');
+const merge = require('./mergeData');
 
 const getLoc = exports;
 
@@ -77,6 +78,7 @@ getLoc.getRecsLocation = function( cfg )
             };
 
             console.log( "get all OK!" );
+            merge.makeData();
         })();
     }, function (err) {
         console.error(err.stack);

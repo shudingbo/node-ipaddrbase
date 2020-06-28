@@ -20,7 +20,7 @@ cz.parse = function( filename )
 function readUIntLE(fd,g,w){
 	g = g || 0;
 	w = w < 1 ? 1 : w > 6 ? 6 : w;
-	var buf = new Buffer(w);
+	var buf = Buffer.alloc(w);
 	fs.readSync(fd,buf,0,w,g)
 	return buf.readUIntLE(0,w)
 }
@@ -31,14 +31,13 @@ function setIpFileString(fd,Begin){
 	M =  fs.fstatSync(fd).size;
   B = B < 0 ? 0 : B;
   
-  let buf = new Buffer(256);
-  buf.fill(0);
+  let buf = Buffer.alloc(256,0);
   fs.readSync(fd,buf,0,256,B);
   let str = '';
   let len = 0;
 	for(var i = 0 ; i < 256 ;i++){
     if( buf[i] === 0 ){
-        let bufRet = new Buffer( i );
+        let bufRet = Buffer.alloc( i );
         buf.copy( bufRet, 0,0,i  );
         len = i+1;
         str = GBK.dc_GBK( bufRet );
@@ -70,7 +69,7 @@ function parseData( filePath )
     let recsT= [];
     let fd = fs.openSync( filePath , 'r');
     
-    let buf = new Buffer(8); 
+    let buf = Buffer.alloc(8); 
     let sOff = 0;
     let eOff = 0;
     let nRec = 0;
@@ -83,8 +82,11 @@ function parseData( filePath )
     console.log( `${sOff}-${eOff} cnt:${nRec}` ); 
     //nRec = 10000;
     ///////
-     let bufIdx = new Buffer(7);
+     let bufIdx = Buffer.alloc(7);
      for( let i=0;i<nRec;i++ ){
+        if( i%10000 === 0 ){
+          console.log(`load ip rec ${i}/${nRec} = ${(i/nRec).toFixed(3)}`);
+        }
         fs.readSync( fd, bufIdx, 0,7, sOff + 7*i);
         let ipStart = bufIdx.readUInt32LE(0);
         let ipEndOff =  bufIdx.readUIntLE(4,3);
@@ -128,6 +130,6 @@ function parseData( filePath )
         //console.log( ipStart, ipEnd,ipC.fromLong(ipStart),ipC.fromLong(ipEnd), Country, Area );
      }
      fs.closeSync( fd);
-
+     console.log(`load ip rec OK`);
      return recsT;
 };
